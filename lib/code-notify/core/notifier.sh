@@ -15,6 +15,9 @@ NOTIFIER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$NOTIFIER_DIR/../utils/detect.sh"
 source "$NOTIFIER_DIR/../utils/voice.sh"
 source "$NOTIFIER_DIR/../utils/sound.sh"
+source "$NOTIFIER_DIR/../utils/click-through-store.sh"
+source "$NOTIFIER_DIR/../utils/click-through-runtime.sh"
+source "$NOTIFIER_DIR/../utils/click-through-resolver.sh"
 
 has_jq() {
     command -v jq >/dev/null 2>&1
@@ -419,45 +422,7 @@ fi
 
 # Get terminal bundle ID for macOS activation
 get_terminal_bundle_id() {
-    local term_prog="${TERM_PROGRAM:-}"
-    local config_file="${CODE_NOTIFY_HOME:-$HOME/.code-notify}/click-through.conf"
-    local line key value
-
-    if [[ -n "$term_prog" ]] && [[ -f "$config_file" ]]; then
-        while IFS= read -r line; do
-            [[ -z "$line" ]] && continue
-            [[ "$line" == \#* ]] && continue
-            key="${line%%=*}"
-            value="${line#*=}"
-            if [[ "$key" == "$term_prog" ]]; then
-                printf '%s\n' "$value"
-                return
-            fi
-        done < "$config_file"
-    fi
-
-    case "$term_prog" in
-        "ghostty") echo "com.mitchellh.ghostty" ;;
-        "iTerm.app") echo "com.googlecode.iterm2" ;;
-        "Apple_Terminal") echo "com.apple.Terminal" ;;
-        "vscode") echo "com.microsoft.VSCode" ;;
-        "cursor") echo "com.todesktop.230313mzl4w4u92" ;;
-        "zed") echo "dev.zed.Zed" ;;
-        "WezTerm") echo "com.github.wez.wezterm" ;;
-        "Alacritty") echo "org.alacritty" ;;
-        "Hyper") echo "co.zeit.hyper" ;;
-        *)
-            if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then
-                echo "com.mitchellh.ghostty"
-            elif [[ -n "${ITERM_SESSION_ID:-}" ]]; then
-                echo "com.googlecode.iterm2"
-            elif [[ -n "${WEZTERM_PANE:-}" ]]; then
-                echo "com.github.wez.wezterm"
-            else
-                echo "com.apple.Terminal"
-            fi
-            ;;
-    esac
+    click_through_resolve_activation_bundle_id
 }
 
 # Function to send notification on macOS
